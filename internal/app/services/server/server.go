@@ -82,6 +82,10 @@ func (s *Server) handleBroadcast(message string) {
 }
 
 func (s *Server) JoinRoom(id string) *client.Client {
+	if _, exists := s.Client[id]; exists {
+		return nil
+	}
+
 	newClient := client.NewClient(id)
 
 	select {

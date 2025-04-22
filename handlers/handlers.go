@@ -47,9 +47,9 @@ func (h *Handler) Join(ctx *gin.Context) {
 
 	client := h.ServerService.JoinRoom(id)
 	if client == nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status":  http.StatusInternalServerError,
-			"message": "Failed to join room",
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  http.StatusBadRequest,
+			"message": "Failed to join room, User already joined the room",
 			"error":   "Internal error",
 		})
 		return
@@ -71,6 +71,14 @@ func (h *Handler) Leave(ctx *gin.Context) {
 			"error":   "Bad request",
 		})
 		return
+	}
+
+	if _, exists := h.ServerService.Client[id]; !exists {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  http.StatusBadRequest,
+			"message": "Failed to leave room",
+			"error":   fmt.Errorf("user not yet joined chat room"),
+		})
 	}
 
 	if err := h.ServerService.LeaveRoom(id); err != nil {
@@ -99,6 +107,14 @@ func (h *Handler) SendMessage(ctx *gin.Context) {
 			"error":   "Bad request",
 		})
 		return
+	}
+
+	if _, exists := h.ServerService.Client[id]; !exists {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  http.StatusBadRequest,
+			"message": "Failed to send message",
+			"error":   fmt.Errorf("user not yet joined chat room"),
+		})
 	}
 
 	if err := h.ServerService.SendMessage(id, msg); err != nil {
@@ -132,6 +148,13 @@ func (h *Handler) GetMessages(ctx *gin.Context) {
 		return
 	}
 
+	// ctx.Writer.Header().Set("Content-type", "text/event-stream")
+	// ctx.Writer.Header().Set("Cache-control", "no-cache")
+	// ctx.Writer.Header().Set("Connection", "keep-alive")
+	// ctx.Writer.Flush()
+
+	// c := ctx.Request.Context()
+
 	var messages []string
 	timeout := time.After(10 * time.Second)
 
@@ -153,6 +176,22 @@ func (h *Handler) GetMessages(ctx *gin.Context) {
 		case <-ctx.Done():
 			ctx.JSON(499, gin.H{"error": "client disconnected"})
 			return
+
+			// select {
+			// case msg, ok := <-msgClient.MsgChan:
+			// 	if !ok {
+			// 		return
+			// 	}
+			// 	fmt.Fprintf(ctx.Writer, "data: %s\n\n", msg)
+			// 	ctx.Writer.Flush()
+			// case <-c.Done():
+			// 	fmt.Fprintf(ctx.Writer, ": ping\n\n")
+			// 	ctx.Writer.Flush()
+			// 	return
+			// case <-time.After(30 * time.Second):
+			// 	fmt.Fprintf(ctx.Writer, ": ping\n\n")
+			// 	ctx.Writer.Flush()
+
 		}
 	}
 }
