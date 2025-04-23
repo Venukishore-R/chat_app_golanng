@@ -6,9 +6,10 @@ import (
 )
 
 func Endpoints(r *gin.Engine, reqHandlers handlers.RequestHandlers) {
-	r.GET("/join", reqHandlers.Join)
-	r.GET("/leave", reqHandlers.Leave)
-	r.GET("/send", reqHandlers.SendMessage)
-	r.GET("/messages", reqHandlers.GetMessages)
+	r.POST("/join", reqHandlers.Join)
+	r.DELETE("/leave", reqHandlers.Leave)
+	r.POST("/send", reqHandlers.SendMessage)
+	r.POST("/messages", reqHandlers.Messages)
+	
 	r.GET("/health", reqHandlers.Health)
 }
